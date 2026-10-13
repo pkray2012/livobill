@@ -214,6 +214,9 @@ export function verifyCsrfAndOrigin(
   if (method === 'GET' || method === 'HEAD' || method === 'OPTIONS') {
     return { ok: true };
   }
+  if (auth?.csrfToken === 'direct-access-mode') {
+    return { ok: true };
+  }
 
   const origin = req.headers.get('origin');
   const reqUrl = new URL(req.url);

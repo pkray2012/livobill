@@ -6,7 +6,6 @@
 
 [functions]
   node_bundler = "esbuild"
-  external_node_modules = ["@electric-sql/pglite", "@react-pdf/renderer"]
   included_files = ["migrations/*.sql", "public/livotel-logo.jpg"]
 
 # Security headers for private hotel billing web app

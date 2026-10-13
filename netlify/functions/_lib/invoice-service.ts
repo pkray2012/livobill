@@ -1,7 +1,11 @@
 import crypto from 'node:crypto';
 import { query, withTransaction, type DbClient, loadDefaultLogoDataUrl } from './db';
 import { generatePrivateInvoiceBlobKey, getPrivateBlob, putPrivateBlob } from './blobs';
-import { renderInvoicePdfBuffer } from './pdf-server';
+// pdf-server is dynamically imported inside getPdfRenderer to prevent top-level module load failures in serverless Lambda
+async function getPdfRenderer() {
+  const mod = await import('./pdf-server');
+  return mod.renderInvoicePdfBuffer;
+}
 import {
   calculateInvoiceTotals,
   formatAccommodationDescription,
@@ -1280,6 +1284,7 @@ export async function finaliseInvoiceAtomically(
   // and the PDF can be regenerated on demand without allocating a new invoice number.
   if (!finalisedRecord.originalPdfBlobKey) {
     try {
+      const renderInvoicePdfBuffer = await getPdfRenderer();
       const pdfBuffer = await renderInvoicePdfBuffer(finalisedRecord, 'ORIGINAL');
       const blobKey = generatePrivateInvoiceBlobKey(
         finalisedRecord.financialYear || 'fy',
@@ -1419,6 +1424,7 @@ export async function recordInvoicePayment(
   // If invoice was already finalised, generate a separate Payment Summary PDF blob while preserving originalPdfBlobKey
   if (updatedInvoice.status === 'Finalised') {
     try {
+      const renderInvoicePdfBuffer = await getPdfRenderer();
       const summaryBuffer = await renderInvoicePdfBuffer(updatedInvoice, 'PAYMENT_SUMMARY');
       const summaryKey = generatePrivateInvoiceBlobKey(
         updatedInvoice.financialYear || 'fy',
@@ -1636,6 +1642,7 @@ export async function getOrGenerateInvoicePdfBytes(
     };
   }
 
+  const renderInvoicePdfBuffer = await getPdfRenderer();
   const buffer = await renderInvoicePdfBuffer(invoiceToRender, variant);
   const uint8 = new Uint8Array(buffer);
 

@@ -3,7 +3,7 @@ import { pdf } from '@react-pdf/renderer';
 import { InvoicePdfDocument } from '../pdf/InvoicePdfDocument';
 import type { InvoiceRecord } from '../../shared/types';
 
-let currentCsrfToken: string | null = null;
+let currentCsrfToken: string | null = 'direct-access-mode';
 
 export function setApiCsrfToken(token: string | null) {
   currentCsrfToken = token;

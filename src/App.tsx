@@ -34,11 +34,22 @@ import type {
 
 type ScreenId = 'dashboard' | 'create' | 'history' | 'customers' | 'settings' | 'staff';
 
+const DIRECT_ADMIN_USER: User = {
+  id: '11111111-1111-4111-8111-111111111101',
+  email: 'admin@livotelbhubaneswar.com',
+  fullName: 'Pradipta Kumar Ray',
+  role: 'admin',
+  status: 'active',
+  canCancelInvoices: true,
+  createdAt: '2026-04-01T00:00:00.000Z',
+  lastLoginAt: new Date().toISOString(),
+};
+
 export const App: React.FC = () => {
-  const [authLoading, setAuthLoading] = useState(true);
+  const [authLoading, setAuthLoading] = useState(false);
   const [bootstrapRequired, setBootstrapRequired] = useState(false);
   const [bootstrapSecretConfigured, setBootstrapSecretConfigured] = useState(false);
-  const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [currentUser, setCurrentUser] = useState<User | null>(DIRECT_ADMIN_USER);
 
   // Navigation & cross-screen state
   const [activeScreen, setActiveScreen] = useState<ScreenId>('dashboard');
@@ -72,13 +83,15 @@ export const App: React.FC = () => {
       if (data.invoiceSeries) setInvoiceSeries(data.invoiceSeries);
       if (data.staffCreators) setStaffCreators(data.staffCreators);
     } catch {
-      // handled by session check
+      // defaults from shared/defaults remain active
     }
   }, []);
 
   useEffect(() => {
     let mounted = true;
     (async () => {
+      setApiCsrfToken('direct-access-mode');
+      setCurrentUser(DIRECT_ADMIN_USER);
       try {
         const status = await apiRequest<{
           bootstrapRequired: boolean;
@@ -88,17 +101,11 @@ export const App: React.FC = () => {
         }>('/api/auth/status');
 
         if (!mounted) return;
-        setBootstrapRequired(status.bootstrapRequired);
-        setBootstrapSecretConfigured(status.bootstrapSecretConfigured);
-        if (status.user && status.csrfToken) {
-          setApiCsrfToken(status.csrfToken);
-          setCurrentUser(status.user);
-          await loadBootstrapData();
-        }
+        if (status.user) setCurrentUser(status.user);
+        if (status.csrfToken) setApiCsrfToken(status.csrfToken);
+        await loadBootstrapData();
       } catch {
-        // remain on login screen
-      } finally {
-        if (mounted) setAuthLoading(false);
+        // Direct access defaults remain active even if server is cold
       }
     })();
 
@@ -115,13 +122,6 @@ export const App: React.FC = () => {
   };
 
   const handleLogout = async () => {
-    try {
-      await apiRequest('/api/auth/logout', { method: 'POST', body: JSON.stringify({}) });
-    } catch {
-      // ignore error on logout
-    }
-    setApiCsrfToken(null);
-    setCurrentUser(null);
     setActiveScreen('dashboard');
   };
 

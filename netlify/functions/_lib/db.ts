@@ -2,8 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
 import { Pool } from '@neondatabase/serverless';
-import { neon } from '@netlify/neon';
-import { PGlite } from '@electric-sql/pglite';
+import type { PGlite } from '@electric-sql/pglite';
 
 export interface DbQueryResult<T = Record<string, any>> {
   rows: T[];
@@ -46,12 +45,6 @@ async function getRawAdapter(): Promise<{
     process.env.NETLIFY_DATABASE_URL_UNPOOLED;
 
   if (isValidPostgresUrl(dbUrl)) {
-    // Also initialize @netlify/neon client to verify environment compatibility
-    try {
-      neon(dbUrl!);
-    } catch {
-      // Pool handles full transactional queries
-    }
     if (!pgPool) {
       pgPool = new Pool({ connectionString: dbUrl });
     }
@@ -59,6 +52,7 @@ async function getRawAdapter(): Promise<{
   }
 
   if (!localPglite) {
+    const { PGlite } = await import('@electric-sql/pglite');
     const isTest = process.env.NODE_ENV === 'test' || process.env.VITEST === 'true';
     const isServerless = Boolean(process.env.LAMBDA_TASK_ROOT || process.env.AWS_LAMBDA_FUNCTION_NAME || process.env.NETLIFY === 'true');
     if (isTest && process.env.TEST_DB_DIR) {
@@ -246,6 +240,7 @@ export async function resetTestDatabase(): Promise<void> {
   if (process.env.NODE_ENV !== 'test' && process.env.VITEST !== 'true') {
     throw new Error('resetTestDatabase may only be called in test environment.');
   }
+  const { PGlite } = await import('@electric-sql/pglite');
   localPglite = new PGlite();
   migrationsApplied = false;
   await ensureMigrations();
