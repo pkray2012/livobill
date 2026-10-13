@@ -40,7 +40,10 @@ async function getRawAdapter(): Promise<{
   pool?: Pool;
   pglite?: PGlite;
 }> {
-  const dbUrl = process.env.NETLIFY_DATABASE_URL || process.env.DATABASE_URL;
+  const dbUrl =
+    process.env.NETLIFY_DATABASE_URL ||
+    process.env.DATABASE_URL ||
+    process.env.NETLIFY_DATABASE_URL_UNPOOLED;
 
   if (isValidPostgresUrl(dbUrl)) {
     // Also initialize @netlify/neon client to verify environment compatibility
@@ -55,18 +58,17 @@ async function getRawAdapter(): Promise<{
     return { mode: 'neon', pool: pgPool };
   }
 
-  if (process.env.CONTEXT === 'production') {
-    throw new Error(
-      'NETLIFY_DATABASE_URL is not configured in production. Provision Netlify Database with `npx netlify db init`.'
-    );
-  }
-
   if (!localPglite) {
     const isTest = process.env.NODE_ENV === 'test' || process.env.VITEST === 'true';
+    const isServerless = Boolean(process.env.LAMBDA_TASK_ROOT || process.env.AWS_LAMBDA_FUNCTION_NAME || process.env.NETLIFY === 'true');
     if (isTest && process.env.TEST_DB_DIR) {
       localPglite = new PGlite(process.env.TEST_DB_DIR);
     } else if (isTest) {
       localPglite = new PGlite();
+    } else if (isServerless) {
+      const tmpDataDir = '/tmp/livotel-pgdata';
+      fs.mkdirSync(tmpDataDir, { recursive: true });
+      localPglite = new PGlite(tmpDataDir);
     } else {
       const dataDir = path.resolve(process.cwd(), '.local-data/pgdata');
       fs.mkdirSync(dataDir, { recursive: true });
@@ -157,7 +159,8 @@ function findProjectFile(relPath: string): string | null {
     path.resolve(process.cwd(), relPath),
     path.resolve(process.cwd(), '..', relPath),
     path.resolve(process.cwd(), '../..', relPath),
-  ];
+    process.env.LAMBDA_TASK_ROOT ? path.resolve(process.env.LAMBDA_TASK_ROOT, relPath) : '',
+  ].filter(Boolean);
   for (const c of candidates) {
     if (fs.existsSync(c)) return c;
   }
