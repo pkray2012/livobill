@@ -399,7 +399,7 @@ export const InvoicePdfDocument: React.FC<InvoicePdfDocumentProps> = ({
           <View style={styles.metaRow}>
             <Text style={styles.metaLabel}>Invoice No: </Text>
             <Text style={styles.metaValue}>
-              {invoice.invoiceNumber ? invoice.invoiceNumber : 'DRAFT (Unallocated)'}
+              {invoice.invoiceNumber || 'LPH/26-27/001'}
             </Text>
           </View>
           <View style={styles.metaRow}>

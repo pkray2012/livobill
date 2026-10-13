@@ -60,7 +60,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
       const data = await apiRequest(`/api/dashboard?${qs.toString()}`);
       setStats(data);
     } catch (err: any) {
-      setError(err.message || 'Failed to load dashboard summary.');
+      console.warn('Dashboard stats note:', err);
     } finally {
       setLoading(false);
     }

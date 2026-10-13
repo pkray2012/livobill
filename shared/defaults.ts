@@ -7,10 +7,21 @@ export const DEFAULT_INVOICE_SERIES: InvoiceSeries = {
   financialYear: '26-27',
   separator: '/',
   nextNumber: 1,
-  paddingDigits: 4,
+  paddingDigits: 3,
   isActive: true,
   updatedAt: new Date(0).toISOString(),
 };
+
+export function formatInvoiceNumberFromSeries(series: {
+  prefix: string;
+  financialYear: string;
+  separator: string;
+  paddingDigits: number;
+  sequenceNumber: number;
+}): string {
+  const pad = String(series.sequenceNumber).padStart(series.paddingDigits, '0');
+  return `${series.prefix}${series.separator}${series.financialYear}${series.separator}${pad}`;
+}
 
 export const DEFAULT_BUSINESS_SETTINGS: BusinessSettings = {
   id: 1,

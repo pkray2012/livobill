@@ -6,7 +6,7 @@
 
 [functions]
   node_bundler = "esbuild"
-  included_files = ["migrations/*.sql", "public/livotel-logo.jpg"]
+  included_files = ["migrations/*.sql", "public/livotel-logo.jpg", "db-assets/*"]
 
 # Security headers for private hotel billing web app
 [[headers]]

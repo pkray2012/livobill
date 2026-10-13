@@ -316,6 +316,7 @@ export const App: React.FC = () => {
           <CreateInvoiceView
             businessSettings={businessSettings}
             taxConfigurations={taxConfigurations}
+            invoiceSeries={invoiceSeries}
             logoSrc={activeLogoSrc}
             initialInvoice={editingDraftInvoice}
             initialCustomer={preselectedCustomer}

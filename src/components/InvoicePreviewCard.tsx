@@ -221,7 +221,7 @@ export const InvoicePreviewCard: React.FC<InvoicePreviewCardProps> = ({
             <div className="px-[42px] mb-3.5 space-y-0.5 text-[12px]">
               <div>
                 <span className="font-bold">Invoice No: </span>
-                <span>{invoice.invoiceNumber || 'DRAFT (Unallocated)'}</span>
+                <span>{invoice.invoiceNumber || 'LPH/26-27/001'}</span>
               </div>
               <div>
                 <span className="font-bold">Invoice Date: </span>

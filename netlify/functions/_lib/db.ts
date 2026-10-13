@@ -59,14 +59,28 @@ async function getRawAdapter(): Promise<{
       localPglite = new PGlite(process.env.TEST_DB_DIR);
     } else if (isTest) {
       localPglite = new PGlite();
-    } else if (isServerless) {
-      const tmpDataDir = '/tmp/livotel-pgdata';
-      fs.mkdirSync(tmpDataDir, { recursive: true });
-      localPglite = new PGlite(tmpDataDir);
     } else {
-      const dataDir = path.resolve(process.cwd(), '.local-data/pgdata');
-      fs.mkdirSync(dataDir, { recursive: true });
-      localPglite = new PGlite(dataDir);
+      const dataFilePath = findProjectFile('db-assets/postgres.data') || findProjectFile('node_modules/@electric-sql/pglite/dist/postgres.data');
+      const wasmFilePath = findProjectFile('db-assets/postgres.wasm') || findProjectFile('node_modules/@electric-sql/pglite/dist/postgres.wasm');
+      
+      let pgliteOptions: any = {};
+      if (dataFilePath && wasmFilePath && fs.existsSync(dataFilePath) && fs.existsSync(wasmFilePath)) {
+        const dataBuf = fs.readFileSync(dataFilePath);
+        const wasmBuf = fs.readFileSync(wasmFilePath);
+        pgliteOptions = {
+          fsBundle: new Blob([dataBuf]),
+          wasmModule: new (globalThis as any).WebAssembly.Module(wasmBuf),
+        };
+      }
+      if (isServerless) {
+        const tmpDataDir = '/tmp/livotel-pgdata';
+        fs.mkdirSync(tmpDataDir, { recursive: true });
+        localPglite = new PGlite(tmpDataDir, pgliteOptions);
+      } else {
+        const dataDir = path.resolve(process.cwd(), '.local-data/pgdata');
+        fs.mkdirSync(dataDir, { recursive: true });
+        localPglite = new PGlite(dataDir, pgliteOptions);
+      }
     }
   }
 
