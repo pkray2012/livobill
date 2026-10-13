@@ -1,0 +1,38 @@
+# Build & Function Configuration for Netlify
+[build]
+  command = "npm run build"
+  publish = "dist"
+  functions = "netlify/functions"
+
+[functions]
+  node_bundler = "esbuild"
+  included_files = ["migrations/*.sql", "public/livotel-logo.jpg"]
+
+# Ensure API routes are handled by the serverless API function before SPA fallback
+[[redirects]]
+  from = "/api/*"
+  to = "/.netlify/functions/api/:splat"
+  status = 200
+  force = true
+
+# Security headers for private hotel billing web app
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "SAMEORIGIN"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+    X-Robots-Tag = "noindex, nofollow, noarchive"
+    Permissions-Policy = "camera=(), microphone=(), geolocation=()"
+
+[[headers]]
+  for = "/api/*"
+  [headers.values]
+    Cache-Control = "no-store, no-cache, must-revalidate, private"
+    X-Robots-Tag = "noindex, nofollow, noarchive"
+
+# SPA Fallback for client-side routes (never overrides /api/* due to order and force=false)
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
